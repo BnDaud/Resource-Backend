@@ -2,6 +2,7 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET"] = "test-secret"
+os.environ["FRONTEND_ORIGIN"] = "http://localhost:5173, https://project-uxn0h.vercel.app/"
 os.environ["ENCRYPTION_KEYS"] = "Z8mQ0wVv3R1dY2Jx9pF6nB7cT5sA4uK1hL0gE3oI2xM="
 os.environ["BLIND_INDEX_KEY"] = "test-blind-key"
 os.environ["SUPABASE_URL"] = "https://example.supabase.co"

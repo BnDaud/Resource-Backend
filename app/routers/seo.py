@@ -17,7 +17,7 @@ STATIC_PAGES = ["/", "/products", "/contact", "/track", "/quote"]
 def sitemap(db: Session = Depends(get_db)):
     """Public pages and every active product. Admin and customer data are never listed."""
     s = get_settings()
-    base = (s.site_url or s.frontend_origin).rstrip("/")
+    base = (s.site_url or s.allowed_origins[0]).rstrip("/")
     urls = [f"<url><loc>{escape(base + p)}</loc></url>" for p in STATIC_PAGES]
     for slug, updated in db.execute(select(Product.slug, Product.updated_at).where(Product.is_archived.is_(False))):
         urls.append(f"<url><loc>{escape(f'{base}/products/{slug}')}</loc><lastmod>{updated:%Y-%m-%d}</lastmod></url>")

@@ -14,11 +14,17 @@ class Settings(BaseSettings):
     encryption_keys: str
     blind_index_key: str
     jwt_expire_minutes: int = 480
-    frontend_origin: str = "http://localhost:5173"
+    frontend_origin: str = "http://localhost:5173"  # one or more website origins, comma-separated
     site_url: str = ""  # public website address, used in the sitemap; defaults to frontend_origin
     cookie_secure: bool = False
     environment: str = "development"
     max_upload_mb: int = 5
+
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        """Origins allowed by CORS. Trailing slashes are removed: a browser origin never has one."""
+        return [o.strip().rstrip("/") for o in self.frontend_origin.split(",") if o.strip()]
 
 
 @lru_cache

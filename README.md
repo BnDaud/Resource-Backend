@@ -45,7 +45,7 @@ Python 3.12.
 | `JWT_SECRET` | long random string (signs session cookies) |
 | `ENCRYPTION_KEYS` | Fernet key(s), newest first: `python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"` |
 | `BLIND_INDEX_KEY` | long random string for searchable lookups. Never change it casually |
-| `FRONTEND_ORIGIN` | website origin allowed by CORS |
+| `FRONTEND_ORIGIN` | website origin(s) allowed by CORS, comma-separated, no trailing slash, e.g. `http://localhost:5173,https://project-uxn0h.vercel.app` |
 | `SITE_URL` | public website address (sitemap) |
 | `COOKIE_SECURE` | `true` in production (HTTPS) |
 | `ENVIRONMENT` | `production` hides `/docs` |
