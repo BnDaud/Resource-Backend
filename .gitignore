@@ -7,3 +7,9 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.sqlite
+
+# Local secret/ID files: never commit
+id.txt
+*.token
+vercel-ids*
+.vercel
