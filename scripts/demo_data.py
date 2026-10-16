@@ -88,7 +88,7 @@ P = [
     ("Kitchen Accessories", "Matt Black Cabinet Handle", "KA-002", "", "Bold bar handle for doors and drawers.",
      "Solid bar handle with a textured grip in matt black. Supplied with screws.",
      ["128 mm", "160 mm", "224 mm"], ["Matt black", "Brushed steel"], [("Material", "Zinc alloy"), ("Finish", "Matt")], AV, 3500, "Box of 50: ask for rate", 300, True, False,
-     ["kitchen-acc__a8OuPQdyvIs", "kitchen-acc__uRBHzqrUHDY"]),
+     ["kitchen-acc__uRBHzqrUHDY", "kitchen-acc__a8OuPQdyvIs"]),
     ("Oven & Burners", "4-Burner Built-in Gas Hob", "OB-001", "", "Black glass-top gas hob with cast pan supports.",
      "Four-burner hob for worktop installation with heavy cast supports and front control knobs.",
      ["60 cm", "75 cm"], ["Black"], [("Burners", "4"), ("Fuel", "Gas"), ("Install", "Built-in")], AV, 185000, "Dealer price on request", 12, True, False,
