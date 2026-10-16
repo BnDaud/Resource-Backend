@@ -22,7 +22,7 @@ tests/
 
 ## Setup
 
-Python 3.12.
+Python 3.12 (pinned in `.python-version`; newer Python versions such as 3.14 are not supported by the pinned SQLAlchemy yet).
 
 1. **Supabase:** create a project. Copy the **Session pooler** connection string (the direct host is IPv6-only), the project URL and the **service_role** key.
 2. ```bash
