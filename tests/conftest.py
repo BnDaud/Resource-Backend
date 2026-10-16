@@ -1,10 +1,13 @@
 import os
 
+from cryptography.fernet import Fernet
+
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET"] = "test-secret"
 os.environ["FRONTEND_ORIGIN"] = "http://localhost:5173, https://project-uxn0h.vercel.app/"
-os.environ["ENCRYPTION_KEYS"] = "Z8mQ0wVv3R1dY2Jx9pF6nB7cT5sA4uK1hL0gE3oI2xM="
-os.environ["BLIND_INDEX_KEY"] = "test-blind-key"
+# Throwaway keys made fresh for every test run, so no key-shaped string lives in the source.
+os.environ["ENCRYPTION_KEYS"] = Fernet.generate_key().decode()
+os.environ["BLIND_INDEX_KEY"] = "test-only-blind-index-key"
 os.environ["SUPABASE_URL"] = "https://example.supabase.co"
 os.environ["SUPABASE_SERVICE_ROLE_KEY"] = "x"
 
