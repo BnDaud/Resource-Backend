@@ -36,7 +36,7 @@ P = [
     ("Boards & Plywood", "18mm Marine Plywood Sheet", "BRD-001", "", "Moisture-resistant plywood for cabinets, doors and fittings.",
      "Multi-layer plywood with a smooth face, suited to kitchen carcasses, wardrobes and shop fittings. Cut-to-size requests available on enquiry.",
      ["8x4 ft", "7x3 ft"], ["Natural"], [("Thickness", "18 mm"), ("Core", "Hardwood"), ("Glue", "Water-resistant")], AV, 42500, "Bulk from 20 sheets: ask for rate", 120, True, False,
-     ["boards__F6cL5B7Gnz8", "boards__NDQIHPA9Iv0"]),
+     ["boards__NDQIHPA9Iv0", "boards__F6cL5B7Gnz8"]),
     ("Boards & Plywood", "Melamine Faced Board, Oak Finish", "BRD-002", "", "Ready-to-use decorative board for furniture and wardrobes.",
      "Particle board faced with a durable oak-effect melamine surface. Pair with matching edge tape for a finished look.",
      ["8x4 ft"], ["Oak", "Walnut", "White", "Grey"], [("Thickness", "18 mm"), ("Surface", "Melamine"), ("Core", "Particle board")], AV, None, "Wholesale price per pallet on request", 64, False, True,
