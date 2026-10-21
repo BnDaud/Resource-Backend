@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas.common import ORM, Page, check_phone, clean  # noqa: F401
+from app.schemas.common import ORM
 
 
 class TestimonialIn(BaseModel):

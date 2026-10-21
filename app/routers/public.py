@@ -22,7 +22,6 @@ from app.models import (
 )
 from app.schemas import (
     AttributeOut,
-    AvailabilityOut,
     CategoryPublic,
     EnquiryIn,
     Page,
@@ -187,12 +186,6 @@ def _get_public_product(db: Session, slug: str) -> Product:
 def product_detail(slug: str, response: Response, db: Session = Depends(get_db)):
     cache(response, 30)
     return to_detail(_get_public_product(db, slug))
-
-
-@router.get("/products/{slug}/availability", response_model=AvailabilityOut)
-def product_availability(slug: str, db: Session = Depends(get_db)):
-    p = _get_public_product(db, slug)
-    return AvailabilityOut(id=p.uid, sku=p.sku, availability=p.availability)
 
 
 @router.get("/products/{slug}/related", response_model=list[ProductPublic])

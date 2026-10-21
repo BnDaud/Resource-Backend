@@ -7,7 +7,7 @@ from app.models import (
     CustomerType,
     QuoteStatus,
 )
-from app.schemas.common import ORM, Page, check_phone, clean  # noqa: F401
+from app.schemas.common import ORM, check_phone, clean
 
 
 class QuoteItemIn(BaseModel):

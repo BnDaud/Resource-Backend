@@ -28,7 +28,7 @@ Python 3.12 (pinned in `.python-version`; newer Python versions such as 3.14 are
 
 1. **Supabase:** create a project. Copy the **Session pooler** connection string (the direct host is IPv6-only), the project URL and the **service_role** key.
 2. ```bash
-   python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+   python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt   # requirements.txt alone is what production needs
    cp .env.example .env                       # fill it in
    .venv/bin/alembic upgrade head             # create tables
    .venv/bin/python -m scripts.seed           # 17 starter categories, their filters and options + settings row

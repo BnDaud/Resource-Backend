@@ -35,7 +35,7 @@ def _load(db: Session, pid: UUID) -> Product:
 
 def _out(p: Product) -> dict:
     return {**to_detail(p), "option_ids": [o.id for o in p.options], "wholesale_note": p.wholesale_note, "stock_qty": p.stock_qty,
-            "is_archived": p.is_archived, "updated_at": p.updated_at,
+            "is_archived": p.is_archived,
             "public_price": p.public_price if p.price_mode.value == "public" else None}
 
 

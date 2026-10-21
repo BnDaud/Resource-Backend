@@ -10,7 +10,7 @@ from app.models import (
     Section,
 )
 from app.schemas.attributes import ProductAttribute
-from app.schemas.common import ORM, Page, check_phone, clean  # noqa: F401
+from app.schemas.common import ORM, clean
 
 
 class CategoryIn(BaseModel):
@@ -126,10 +126,3 @@ class ProductAdmin(ProductPublicDetail):
     wholesale_note: str
     stock_qty: int | None
     is_archived: bool
-    updated_at: datetime
-
-
-class AvailabilityOut(BaseModel):
-    id: str
-    sku: str
-    availability: Availability

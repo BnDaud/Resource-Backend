@@ -28,7 +28,7 @@ def test_division_attributes_are_inherited_by_its_categories(client, seed):
     names = lambda cid: [a["name"] for a in client.get(f"/api/v1/admin/categories/{cid}/attributes").json()]
     assert names(seed["cat"].id) == ["Finish", "Pattern", "Size"]  # the division's first, then the category's own
     assert names(seed["cat2"].id) == []  # an accessories category does not get the boards' attributes
-    assert client.get(f"/api/v1/admin/attributes?scope=section:boards").json()[0]["options"][1]["color"] == "#ffffff"  # swatch colour is stored lowercase
+    assert client.get("/api/v1/admin/attributes?scope=section:boards").json()[0]["options"][1]["color"] == "#ffffff"  # swatch colour is stored lowercase
 
 
 def test_attribute_input_is_validated(client, seed):

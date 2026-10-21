@@ -4,7 +4,7 @@ from pydantic import BaseModel, EmailStr, Field
 from app.models import (
     Role,
 )
-from app.schemas.common import ORM, Page, check_phone, clean  # noqa: F401
+from app.schemas.common import ORM
 
 
 class LoginIn(BaseModel):

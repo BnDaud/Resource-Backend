@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 from app.models import (
     EnquiryStatus,
 )
-from app.schemas.common import ORM, Page, check_phone, clean  # noqa: F401
+from app.schemas.common import ORM, check_phone, clean
 
 
 class EnquiryIn(BaseModel):

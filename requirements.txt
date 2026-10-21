@@ -11,5 +11,4 @@ python-multipart==0.0.20
 httpx==0.28.1
 slowapi==0.1.9
 pillow==11.0.0
-pytest==8.3.4
 cryptography==44.0.0

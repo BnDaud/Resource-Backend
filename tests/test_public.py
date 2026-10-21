@@ -55,7 +55,6 @@ def test_detail_availability_related(client, seed):
     d = client.get("/api/v1/products/oak-hdf-board").json()
     assert d["category_slug"] == "hdf" and "wholesale_note" not in d
     assert client.get("/api/v1/products/hidden").status_code == 404
-    assert client.get("/api/v1/products/white-edge-tape/availability").json()["availability"] == "out_of_stock"
     assert client.get("/api/v1/products/oak-hdf-board/related").status_code == 200
 
 
