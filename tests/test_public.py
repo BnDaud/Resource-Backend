@@ -4,7 +4,17 @@ def test_categories_and_counts(client, seed):
     r = client.get("/api/v1/categories")
     assert r.status_code == 200
     d = {c["name"]: c["product_count"] for c in r.json()}
-    assert d == {"Flush Doors": 1, "Edges Tape": 1}  # archived product not counted
+    assert d == {"HDF": 1, "Edges Tape": 1}  # archived product not counted
+
+
+def test_categories_carry_their_section_and_products_filter_by_it(client, seed):
+    sections = {c["name"]: c["section"] for c in client.get("/api/v1/categories").json()}
+    assert sections == {"HDF": "boards", "Edges Tape": "accessories"}
+    names = lambda **q: [p["name"] for p in client.get("/api/v1/products", params=q).json()["items"]]
+    assert names(section="boards") == ["Oak HDF Board"]
+    assert names(section="accessories") == ["White Edge Tape"]
+    assert names(section="boards", category="edges-tape") == []  # a category of the other division matches nothing
+    assert client.get("/api/v1/products", params={"section": "doors"}).status_code == 422
 
 
 def test_product_list_hides_private_and_archived(client, seed):
@@ -35,18 +45,18 @@ def test_filters_sort_and_pagination(client, seed):
     assert [x["sku"] for x in g(category="edges-tape")["items"]] == ["ET-100"]
     assert [x["sku"] for x in g(availability="out_of_stock")["items"]] == ["ET-100"]
     assert [x["sku"] for x in g(featured="true")["items"]] == ["FD-001"]
-    assert [x["name"] for x in g(sort="alpha")["items"]] == ["Oak Flush Door", "White Edge Tape"]
+    assert [x["name"] for x in g(sort="alpha")["items"]] == ["Oak HDF Board", "White Edge Tape"]
     page = g(page_size=1, page=2)
     assert page["pages"] == 2 and len(page["items"]) == 1
     assert client.get("/api/v1/products", params={"sort": "bogus"}).status_code == 422
 
 
 def test_detail_availability_related(client, seed):
-    d = client.get("/api/v1/products/oak-flush-door").json()
-    assert d["category_slug"] == "flush-doors" and "wholesale_note" not in d
+    d = client.get("/api/v1/products/oak-hdf-board").json()
+    assert d["category_slug"] == "hdf" and "wholesale_note" not in d
     assert client.get("/api/v1/products/hidden").status_code == 404
     assert client.get("/api/v1/products/white-edge-tape/availability").json()["availability"] == "out_of_stock"
-    assert client.get("/api/v1/products/oak-flush-door/related").status_code == 200
+    assert client.get("/api/v1/products/oak-hdf-board/related").status_code == 200
 
 
 def test_enquiry_validation_and_honeypot(client, seed, db):

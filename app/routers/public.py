@@ -14,6 +14,7 @@ from app.models import (
     Product,
     ProductImage,
     QuoteRequest,
+    Section,
     Testimonial,
 )
 from app.schemas import (
@@ -92,6 +93,7 @@ def products(
     db: Session = Depends(get_db),
     q: str | None = Query(None, max_length=100),
     category: str | None = Query(None, max_length=140, description="category slug"),
+    section: Section | None = Query(None, description="boards or accessories"),
     availability: list[Availability] | None = Query(None),
     featured: bool | None = None,
     new: bool | None = None,
@@ -101,8 +103,12 @@ def products(
 ):
     cache(response, 30)
     stmt = select(Product).where(Product.is_archived.is_(False))
+    if category or section:
+        stmt = stmt.join(Category)
     if category:
-        stmt = stmt.join(Category).where(Category.slug == category)
+        stmt = stmt.where(Category.slug == category)
+    if section:
+        stmt = stmt.where(Category.section == section)
     if availability:
         stmt = stmt.where(Product.availability.in_(availability))
     if featured is not None:

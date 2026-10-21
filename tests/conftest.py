@@ -21,7 +21,7 @@ from app.core.db import Base, get_db
 from app.core.limiter import limiter
 from app.core.security import hash_password
 from app.main import app
-from app.models import Category, Product, Role, Staff, Availability, PriceMode
+from app.models import Category, Product, Role, Section, Staff, Availability, PriceMode
 
 H = {"X-Requested-With": "rc-cms"}
 
@@ -52,12 +52,12 @@ def client(db):
 
 @pytest.fixture()
 def seed(db):
-    cat = Category(name="Flush Doors", slug="flush-doors")
+    cat = Category(name="HDF", slug="hdf", section=Section.boards)
     cat2 = Category(name="Edges Tape", slug="edges-tape")
     db.add_all([cat, cat2])
     db.flush()
     ps = [
-        Product(name="Oak Flush Door", slug="oak-flush-door", sku="FD-001", category_id=cat.id, brand="Acme",
+        Product(name="Oak HDF Board", slug="oak-hdf-board", sku="FD-001", category_id=cat.id, brand="Acme",
                 availability=Availability.available, price_mode=PriceMode.public, public_price=45000,
                 wholesale_note="SECRET-WHOLESALE", stock_qty=77, is_featured=True),
         Product(name="White Edge Tape", slug="white-edge-tape", sku="ET-100", category_id=cat2.id,

@@ -20,7 +20,7 @@ def list_categories(db: Session = Depends(get_db)):
 def create_category(data: CategoryIn, db: Session = Depends(get_db)):
     if db.scalar(select(Category.id).where(func.lower(Category.name) == data.name.strip().lower())):
         raise HTTPException(409, "A category with this name already exists")
-    c = Category(name=data.name.strip(), description=data.description, sort_order=data.sort_order)
+    c = Category(name=data.name.strip(), description=data.description, sort_order=data.sort_order, section=data.section)
     c.slug = unique_slug(db, Category, c.name)
     db.add(c)
     db.commit()
@@ -33,7 +33,7 @@ def update_category(cid: int, data: CategoryIn, db: Session = Depends(get_db)):
     dup = db.scalar(select(Category.id).where(func.lower(Category.name) == data.name.strip().lower(), Category.id != cid))
     if dup:
         raise HTTPException(409, "A category with this name already exists")
-    c.name, c.description, c.sort_order = data.name.strip(), data.description, data.sort_order
+    c.name, c.description, c.sort_order, c.section = data.name.strip(), data.description, data.sort_order, data.section
     c.slug = unique_slug(db, Category, c.name, exclude_id=cid)
     db.commit()
     return c

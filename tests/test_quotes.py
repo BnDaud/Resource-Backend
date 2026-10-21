@@ -57,7 +57,7 @@ def test_history_survives_rename_archive_and_delete(client, seed, db):
     assert client.patch(f"/api/v1/admin/products/{pid}/archive", headers=H).status_code == 200
     q = db.query(QuoteRequest).filter_by(reference=ref).one()
     names = {i.product_name for i in q.items}
-    assert "Oak Flush Door" in names  # snapshot unchanged
+    assert "Oak HDF Board" in names  # snapshot unchanged
     # even a hard delete only nulls the link
     db.query(QuoteItem).count()
     db.delete(db.get(Product, seed["p1"].id))

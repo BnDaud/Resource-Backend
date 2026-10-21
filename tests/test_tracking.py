@@ -25,7 +25,7 @@ def test_track_quote_with_reference_and_phone(client, seed, db):
         assert r.status_code == 200, phone
     body = r.json()
     assert body["kind"] == "quote" and body["status"] == "new"
-    assert body["items"] == [{"name": "Oak Flush Door", "sku": "FD-001", "quantity": 3, "note": "Oak, 2100x900"}]
+    assert body["items"] == [{"name": "Oak HDF Board", "sku": "FD-001", "quantity": 3, "note": "Oak, 2100x900"}]
     assert "SECRET" not in r.text and "Chinedu" not in r.text and PHONE not in r.text  # nothing private is returned
 
 
@@ -56,8 +56,8 @@ def test_category_cover_image_and_sitemap(client, seed, db):
     db.add(ProductImage(product_id=seed["p1"].id, url="https://cdn/x.webp", storage_path="x", is_main=True))
     db.commit()
     cats = {c["slug"]: c for c in client.get("/api/v1/categories").json()}
-    assert cats["flush-doors"]["cover_image"] == "https://cdn/x.webp" and cats["edges-tape"]["cover_image"] is None
+    assert cats["hdf"]["cover_image"] == "https://cdn/x.webp" and cats["edges-tape"]["cover_image"] is None
     xml = client.get("/sitemap.xml")
     assert xml.status_code == 200 and "application/xml" in xml.headers["content-type"]
-    assert "/products/oak-flush-door" in xml.text and "/products/hidden" not in xml.text  # archived products are not listed
+    assert "/products/oak-hdf-board" in xml.text and "/products/hidden" not in xml.text  # archived products are not listed
     assert "/admin" not in xml.text

@@ -24,7 +24,10 @@ def test_login_logout_and_bad_credentials(client, seed):
 def test_mutations_require_csrf_header(client, seed):
     login(client)
     assert client.post("/api/v1/admin/categories", json={"name": "X"}).status_code == 403
-    assert client.post("/api/v1/admin/categories", json={"name": "X"}, headers=H).status_code == 201
+    r = client.post("/api/v1/admin/categories", json={"name": "X"}, headers=H)
+    assert r.status_code == 201 and r.json()["section"] == "accessories"  # accessories unless staff say otherwise
+    r = client.put(f"/api/v1/admin/categories/{r.json()['id']}", json={"name": "X", "section": "boards"}, headers=H)
+    assert r.status_code == 200 and r.json()["section"] == "boards"
 
 
 def test_disabled_staff_locked_out(client, seed, db):
@@ -84,7 +87,7 @@ def test_product_crud_validation_and_private_fields(client, seed):
 
 def test_category_rules(client, seed):
     login(client)
-    assert client.post("/api/v1/admin/categories", json={"name": "flush doors"}, headers=H).status_code == 409
+    assert client.post("/api/v1/admin/categories", json={"name": "hdf"}, headers=H).status_code == 409
     assert client.delete(f"/api/v1/admin/categories/{seed['cat'].id}", headers=H).status_code == 409  # has products
     c = client.post("/api/v1/admin/categories", json={"name": "Brand New"}, headers=H).json()
     assert c["slug"] == "brand-new"

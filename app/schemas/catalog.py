@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from app.models import (
     Availability,
     PriceMode,
+    Section,
 )
 from app.schemas.common import ORM, Page, check_phone, clean  # noqa: F401
 
@@ -15,6 +16,7 @@ class CategoryIn(BaseModel):
     name: str = Field(min_length=1, max_length=120)
     description: str = Field(default="", max_length=1000)
     sort_order: int = 0
+    section: Section = Section.accessories
 
 
 class CategoryOut(ORM):
@@ -22,8 +24,8 @@ class CategoryOut(ORM):
     name: str
     slug: str
     description: str
-    image_url: str | None
     sort_order: int
+    section: Section
 
 
 class CategoryPublic(CategoryOut):

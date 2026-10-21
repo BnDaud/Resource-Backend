@@ -1,21 +1,23 @@
-"""Seed the initial categories and the site-settings row. Safe to run repeatedly."""
+"""Seed the initial categories (two divisions: boards and accessories) and the site-settings row. Safe to run repeatedly."""
 from sqlalchemy import select
 
 from app.core.db import SessionLocal
-from app.models import Category
+from app.models import Category, Section
 from app.services.common import get_site_settings, slugify
 
+B, A = Section.boards, Section.accessories
 CATEGORIES = [
-    "Boards & Plywood", "Flush Doors", "Door Boards", "Edges Tape", "Profiles", "Glass Profiles",
-    "Kitchen Accessories", "Oven & Burners", "Heat Extractors", "Plate Racks", "Pull-Out Hanger Profiles",
-    "Wine Racks", "Magic Corners", "Spoon Racks", "Microwave", "Other Products",
+    ("HDF", B), ("MDF", B), ("Blockboard", B),
+    ("Microwave", A), ("Heat Extractors", A), ("Burners", A), ("Oven", A), ("Kitchen Accessories", A), ("Plate Racks", A),
+    ("Wine Racks", A), ("Spoon Racks", A), ("Pull-Out Hanger Profiles", A), ("Magic Corners", A), ("Edges Tape", A),
+    ("Profiles", A), ("Glass Profiles", A), ("Other Products", A),
 ]
 
 with SessionLocal() as db:
     have = set(db.scalars(select(Category.name)))
-    for i, name in enumerate(CATEGORIES):
+    for i, (name, section) in enumerate(CATEGORIES):
         if name not in have:
-            db.add(Category(name=name, slug=slugify(name), sort_order=i))
+            db.add(Category(name=name, slug=slugify(name), sort_order=i, section=section))
     db.commit()
     get_site_settings(db)
     print("seeded", len(CATEGORIES), "categories + settings row")

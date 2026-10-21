@@ -37,6 +37,11 @@ class Availability(str, enum.Enum):
     discontinued = "discontinued"
 
 
+class Section(str, enum.Enum):
+    boards = "boards"
+    accessories = "accessories"
+
+
 class PriceMode(str, enum.Enum):
     request = "request"
     public = "public"
@@ -91,8 +96,8 @@ class Category(Base, Timestamped):
     name: Mapped[str] = mapped_column(String(120), unique=True)
     slug: Mapped[str] = mapped_column(String(140), unique=True, index=True)
     description: Mapped[str] = mapped_column(Text, default="")
-    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    section: Mapped[Section] = mapped_column(Enum(Section, native_enum=False, length=20), default=Section.accessories, index=True)  # which division of the shop it belongs to
     products: Mapped[list["Product"]] = relationship(back_populates="category")
 
 
