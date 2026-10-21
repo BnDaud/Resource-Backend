@@ -1,4 +1,5 @@
 """Request/response models, grouped by domain. Import from here: `from app.schemas import ProductIn`."""
+from app.schemas.attributes import *  # noqa: F401,F403
 from app.schemas.auth import *  # noqa: F401,F403
 from app.schemas.catalog import *  # noqa: F401,F403
 from app.schemas.common import *  # noqa: F401,F403

@@ -1,4 +1,5 @@
 import math
+from collections import defaultdict
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from sqlalchemy import case, func, or_, select
@@ -8,6 +9,7 @@ from app.core.crypto import phone_tokens
 from app.core.db import get_db
 from app.core.limiter import limiter
 from app.models import (
+    AttributeOption,
     Availability,
     Category,
     Enquiry,
@@ -16,8 +18,10 @@ from app.models import (
     QuoteRequest,
     Section,
     Testimonial,
+    product_options,
 )
 from app.schemas import (
+    AttributeOut,
     AvailabilityOut,
     CategoryPublic,
     EnquiryIn,
@@ -32,6 +36,7 @@ from app.schemas import (
     SettingsIO,
     TestimonialPublic,
 )
+from app.services.attributes import division_attributes, effective_attributes, product_attributes
 from app.services.common import escape_like, get_site_settings
 from app.services.quotes import create_quote
 
@@ -56,7 +61,7 @@ def to_public(p: Product) -> dict:
 
 def to_detail(p: Product) -> dict:
     return {
-        **to_public(p), "description": p.description, "sizes": p.sizes or [], "colours": p.colours or [],
+        **to_public(p), "description": p.description, "attributes": product_attributes(p),
         "specs": p.specs, "images": p.images, "category_slug": p.category.slug,
     }
 
@@ -87,6 +92,27 @@ def categories(response: Response, db: Session = Depends(get_db)):
     ]
 
 
+@router.get("/attributes", response_model=list[AttributeOut])
+def filter_attributes(
+    response: Response, db: Session = Depends(get_db), category: str | None = Query(None, max_length=140, description="category slug"),
+    section: Section | None = None,
+):
+    """The filters the website offers: a category's own plus its division's, or just a division's."""
+    cache(response)
+    if category:
+        cat = db.scalar(select(Category).where(Category.slug == category)) or _no_category()
+        found = effective_attributes(db, cat)
+    elif section:
+        found = division_attributes(db, section)
+    else:
+        found = []
+    return [a for a in found if a.filterable]
+
+
+def _no_category():
+    raise HTTPException(404, "Category not found")
+
+
 @router.get("/products", response_model=Page[ProductPublic])
 def products(
     response: Response,
@@ -94,6 +120,7 @@ def products(
     q: str | None = Query(None, max_length=100),
     category: str | None = Query(None, max_length=140, description="category slug"),
     section: Section | None = Query(None, description="boards or accessories"),
+    opt: list[int] | None = Query(None, max_length=60, description="attribute option ids: any of one attribute's options, all of the attributes"),
     availability: list[Availability] | None = Query(None),
     featured: bool | None = None,
     new: bool | None = None,
@@ -111,6 +138,12 @@ def products(
         stmt = stmt.where(Category.section == section)
     if availability:
         stmt = stmt.where(Product.availability.in_(availability))
+    if opt:
+        by_attribute: dict[int, set[int]] = defaultdict(set)
+        for oid, aid in db.execute(select(AttributeOption.id, AttributeOption.attribute_id).where(AttributeOption.id.in_(opt))):
+            by_attribute[aid].add(oid)
+        for ids in by_attribute.values():
+            stmt = stmt.where(Product.id.in_(select(product_options.c.product_id).where(product_options.c.option_id.in_(ids))))
     if featured is not None:
         stmt = stmt.where(Product.is_featured.is_(featured))
     if new is not None:
@@ -142,7 +175,8 @@ def products(
 def _get_public_product(db: Session, slug: str) -> Product:
     p = db.scalar(
         select(Product).where(Product.slug == slug, Product.is_archived.is_(False))
-        .options(selectinload(Product.images), selectinload(Product.specs), joinedload(Product.category))
+        .options(selectinload(Product.images), selectinload(Product.specs), joinedload(Product.category),
+                 selectinload(Product.options).joinedload(AttributeOption.attribute))
     )
     if not p:
         raise HTTPException(404, "Product not found")

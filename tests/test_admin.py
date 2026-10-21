@@ -2,7 +2,7 @@ from tests.conftest import H, login
 
 PROD = {"name": "New Plywood", "sku": "pw-1", "category_id": 1, "availability": "available",
         "price_mode": "request", "wholesale_note": "internal", "stock_qty": 5,
-        "specs": [{"name": "Thickness", "value": "18mm"}], "sizes": ["8x4", "8x4", " "], "colours": ["Oak"]}
+        "specs": [{"name": "Thickness", "value": "18mm"}], "option_ids": []}
 
 
 def test_admin_endpoints_require_login(client, seed):
@@ -64,7 +64,7 @@ def test_product_crud_validation_and_private_fields(client, seed):
     r = client.post("/api/v1/admin/products", json={**PROD, "category_id": seed["cat"].id}, headers=H)
     assert r.status_code == 201, r.text
     p = r.json()
-    assert p["sku"] == "PW-1" and p["slug"] == "new-plywood" and p["sizes"] == ["8x4"]
+    assert p["sku"] == "PW-1" and p["slug"] == "new-plywood" and p["attributes"] == []
     assert p["wholesale_note"] == "internal" and p["stock_qty"] == 5  # staff see private fields
     pub = client.get("/api/v1/products/new-plywood").text
     assert "internal" not in pub and "stock_qty" not in pub

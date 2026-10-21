@@ -4,9 +4,9 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import (
-    JSON,
     Boolean,
     CheckConstraint,
+    Column,
     DateTime,
     Enum,
     ForeignKey,
@@ -14,6 +14,7 @@ from sqlalchemy import (
     Integer,
     Numeric,
     String,
+    Table,
     Text,
     UniqueConstraint,
     event,
@@ -116,8 +117,6 @@ class Product(Base, Timestamped):
     brand: Mapped[str] = mapped_column(String(120), default="")
     short_description: Mapped[str] = mapped_column(String(300), default="")
     description: Mapped[str] = mapped_column(Text, default="")
-    sizes: Mapped[list] = mapped_column(JSON, default=list)
-    colours: Mapped[list] = mapped_column(JSON, default=list)
     availability: Mapped[Availability] = mapped_column(Enum(Availability, native_enum=False, length=20), default=Availability.on_request)
     price_mode: Mapped[PriceMode] = mapped_column(Enum(PriceMode, native_enum=False, length=20), default=PriceMode.request)
     public_price: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
@@ -133,6 +132,41 @@ class Product(Base, Timestamped):
     specs: Mapped[list["ProductSpec"]] = relationship(
         back_populates="product", cascade="all, delete-orphan", order_by="ProductSpec.sort_order"
     )
+    options: Mapped[list["AttributeOption"]] = relationship(secondary="product_options", order_by="AttributeOption.sort_order")  # finish, colour, size, ...
+
+
+class Attribute(Base):
+    """A choice a category (or a whole division) offers, such as Finish, Colour or Size. It is a filter on the website and,
+    when `customer_picks` is set, something the customer chooses when adding the product to a quote."""
+    __tablename__ = "attributes"
+    __table_args__ = (CheckConstraint("(category_id IS NULL) <> (section IS NULL)", name="ck_attribute_one_scope"),)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    category_id: Mapped[int | None] = mapped_column(ForeignKey("categories.id", ondelete="CASCADE"), nullable=True, index=True)
+    section: Mapped[Section | None] = mapped_column(Enum(Section, native_enum=False, length=20), nullable=True, index=True)
+    name: Mapped[str] = mapped_column(String(60))
+    filterable: Mapped[bool] = mapped_column(Boolean, default=True)
+    customer_picks: Mapped[bool] = mapped_column(Boolean, default=True)
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    options: Mapped[list["AttributeOption"]] = relationship(
+        back_populates="attribute", cascade="all, delete-orphan", order_by="AttributeOption.sort_order"
+    )
+
+
+class AttributeOption(Base):
+    __tablename__ = "attribute_options"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    attribute_id: Mapped[int] = mapped_column(ForeignKey("attributes.id", ondelete="CASCADE"), index=True)
+    label: Mapped[str] = mapped_column(String(60))
+    color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # swatch, like #c0392b
+    sort_order: Mapped[int] = mapped_column(Integer, default=0)
+    attribute: Mapped[Attribute] = relationship(back_populates="options")
+
+
+product_options = Table(
+    "product_options", Base.metadata,
+    Column("product_id", ForeignKey("products.id", ondelete="CASCADE"), primary_key=True),
+    Column("option_id", ForeignKey("attribute_options.id", ondelete="CASCADE"), primary_key=True),
+)
 
 
 class ProductImage(Base):

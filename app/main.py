@@ -9,6 +9,7 @@ from app.core.config import get_settings
 from app.core.limiter import limiter
 from app.routers import (
     admin_auth,
+    admin_attributes,
     admin_categories,
     admin_dashboard,
     admin_enquiries,
@@ -59,7 +60,7 @@ def health():
 
 
 for r in (
-    public.router, admin_auth.router, admin_categories.router, admin_products.router, admin_dashboard.router, admin_quotes.router,
+    public.router, admin_auth.router, admin_attributes.router, admin_categories.router, admin_products.router, admin_dashboard.router, admin_quotes.router,
     admin_enquiries.router, admin_testimonials.router, seo.router, admin_settings.router, admin_staff.router,
 ):
     app.include_router(r)

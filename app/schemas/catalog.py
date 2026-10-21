@@ -9,6 +9,7 @@ from app.models import (
     PriceMode,
     Section,
 )
+from app.schemas.attributes import ProductAttribute
 from app.schemas.common import ORM, Page, check_phone, clean  # noqa: F401
 
 
@@ -52,8 +53,7 @@ class ProductIn(BaseModel):
     brand: str = Field(default="", max_length=120)
     short_description: str = Field(default="", max_length=300)
     description: str = Field(default="", max_length=10000)
-    sizes: list[str] = Field(default_factory=list, max_length=50)
-    colours: list[str] = Field(default_factory=list, max_length=50)
+    option_ids: list[int] = Field(default_factory=list, max_length=300)  # the finish, colour, size, ... options this product has
     specs: list[SpecIO] = Field(default_factory=list, max_length=50)
     availability: Availability = Availability.on_request
     price_mode: PriceMode = PriceMode.request
@@ -76,15 +76,10 @@ class ProductIn(BaseModel):
     def _ws(cls, v: str) -> str:
         return clean(v)
 
-    @field_validator("sizes", "colours")
+    @field_validator("option_ids")
     @classmethod
-    def _tags(cls, v: list[str]) -> list[str]:
-        out = []
-        for x in v:
-            x = clean(x)[:60]
-            if x and x not in out:
-                out.append(x)
-        return out
+    def _unique_ids(cls, v: list[int]) -> list[int]:
+        return list(dict.fromkeys(v))
 
     @model_validator(mode="after")
     def _price(self):
@@ -120,14 +115,14 @@ class ProductPublic(ORM):
 
 class ProductPublicDetail(ProductPublic):
     description: str
-    sizes: list[str]
-    colours: list[str]
+    attributes: list[ProductAttribute]
     specs: list[SpecOut]
     images: list[ImageOut]
     category_slug: str
 
 
 class ProductAdmin(ProductPublicDetail):
+    option_ids: list[int]
     wholesale_note: str
     stock_qty: int | None
     is_archived: bool

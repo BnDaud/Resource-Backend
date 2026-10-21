@@ -22,10 +22,11 @@ from sqlalchemy import select
 
 from app.core.db import SessionLocal
 from app.models import (
-    Availability as A, Category, CustomerType, Enquiry, EnquiryStatus, PriceMode, Product, ProductImage,
+    AttributeOption, Availability as A, Category, CustomerType, Enquiry, EnquiryStatus, PriceMode, Product, ProductImage,
     ProductSpec, QuoteItem, QuoteRequest, QuoteStatus, Testimonial,
 )
 from app.services import storage
+from app.services.attributes import effective_attributes
 from app.services.common import get_site_settings, new_reference, unique_slug
 
 ASSETS = Path(__file__).parent / "demo_assets"
@@ -35,27 +36,27 @@ AV, OOS, REQ, DISC = A.available, A.out_of_stock, A.on_request, A.discontinued
 P = [
     ("HDF", "Plain HDF Board, White Matte", "HDF-001", "", "Smooth, dense board for cabinets, wardrobes and wall panels.",
      "High-density fibreboard with a clean white matte face. Takes edge tape well and gives a flat, durable finish for furniture.",
-     ["8x4 ft", "7x3 ft"], ["White", "Cream", "Grey"], [("Type", "HDF"), ("Finish", "Matte"), ("Colour", "Simple colours"), ("Pattern", "Plain"), ("Thickness", "18 mm")], AV, 42500, "Bulk from 20 boards: ask for rate", 120, True, False,
+     ["8x4 ft", "7x3 ft"], ["White", "Cream", "Grey"], [("Finish", "Matte"), ("Colour type", "Simple colours"), ("Pattern", "Synthetic"), ("Thickness", "18 mm")], AV, 42500, "Bulk from 20 boards: ask for rate", 120, True, False,
      ["boards__F6cL5B7Gnz8"]),
     ("HDF", "Glossy HDF Board, Cream", "HDF-002", "", "High-gloss face for kitchen doors and shop fittings.",
      "High-density fibreboard with a shiny, reflective surface that wipes clean. Choose from simple colours or the colour sheet.",
-     ["8x4 ft"], ["Cream", "White", "Red", "Green"], [("Type", "HDF"), ("Finish", "Glossy"), ("Colour", "Simple colours"), ("Pattern", "Plain"), ("Thickness", "18 mm")], AV, None, "Wholesale price per pallet on request", 64, False, True,
+     ["8x4 ft"], ["Cream", "White", "Red", "Green"], [("Finish", "Glossy"), ("Colour type", "Simple colours"), ("Pattern", "Synthetic"), ("Thickness", "18 mm")], AV, None, "Wholesale price per pallet on request", 64, False, True,
      ["boards__7m3ReTvWFKk"]),
     ("MDF", "MDF Board, Oak Pattern (Synchronized)", "MDF-001", "", "Wood-grain surface that follows the grain pattern.",
      "Medium-density fibreboard with a synchronized wood-grain surface, matched to the pattern of real timber. Ideal for wardrobes and wall panelling.",
-     ["8x4 ft"], ["Oak", "Walnut"], [("Type", "MDF"), ("Finish", "Matte"), ("Colour", "Complex colours (colour sheet)"), ("Pattern", "Synchronized"), ("Thickness", "18 mm")], AV, 38500, "", 80, True, False,
+     ["8x4 ft"], ["Oak", "Walnut"], [("Finish", "Matte"), ("Colour type", "Complex colours"), ("Pattern", "Synchronized"), ("Thickness", "18 mm")], AV, 38500, "", 80, True, False,
      ["boards__M_06s9uF0Ro"]),
     ("MDF", "Glossy MDF Board, Red", "MDF-002", "", "Bold glossy colour for modern furniture.",
      "Medium-density fibreboard with a glossy coloured face. Simple colours are in stock; other shades are chosen from the colour sheet.",
-     ["8x4 ft"], ["Red", "White", "Green", "Off-white"], [("Type", "MDF"), ("Finish", "Glossy"), ("Colour", "Simple colours"), ("Pattern", "Synthetic"), ("Thickness", "16 mm")], AV, None, "", 55, False, True,
+     ["8x4 ft"], ["Red", "White", "Green", "Off-white"], [("Finish", "Glossy"), ("Colour type", "Simple colours"), ("Pattern", "Synthetic"), ("Thickness", "16 mm")], AV, None, "", 55, False, True,
      ["boards__NDQIHPA9Iv0"]),
     ("Blockboard", "Blockboard 18 mm, Plain", "BLK-001", "", "Strong timber-core board for shelves and doors.",
      "Blockboard with a solid timber-strip core and smooth faces. Light, stiff and well suited to long shelves, counters and doors.",
-     ["8x4 ft", "7x3 ft"], ["Natural"], [("Type", "Blockboard"), ("Finish", "Matte"), ("Thickness", "18 mm"), ("Core", "Timber strips")], AV, 46000, "Bulk from 20 boards: ask for rate", 70, True, False,
+     ["8x4 ft", "7x3 ft"], ["Natural"], [("Finish", "Matte"), ("Thickness", "18 mm"), ("Core", "Timber strips")], AV, 46000, "Bulk from 20 boards: ask for rate", 70, True, False,
      ["boards__F6cL5B7Gnz8"]),
     ("Blockboard", "Veneered Blockboard, Walnut", "BLK-002", "", "Walnut-faced blockboard for finished furniture.",
      "Blockboard faced with a walnut-look veneer, ready to cut and edge for wardrobes and desks.",
-     ["8x4 ft"], ["Walnut", "Oak"], [("Type", "Blockboard"), ("Finish", "Matte"), ("Pattern", "Synchronized"), ("Thickness", "18 mm")], REQ, None, "", None, False, True,
+     ["8x4 ft"], ["Walnut", "Oak"], [("Finish", "Matte"), ("Pattern", "Synchronized"), ("Thickness", "18 mm")], REQ, None, "", None, False, True,
      ["boards__7m3ReTvWFKk"]),
     ("Edges Tape", "Wood Veneer Edge Banding Roll", "ET-001", "", "Iron-on veneer tape for finishing board edges.",
      "Real-wood-look edge banding with pre-applied adhesive. Matches common oak and walnut boards.",
@@ -202,6 +203,33 @@ DEMO_SETTINGS = dict(
 )
 
 
+# which attribute the old "sizes" and "colours" lists of a demo product belong to, per category
+SIZE_ATTR = {"HDF": "Size", "MDF": "Size", "Blockboard": "Size", "Microwave": "Capacity", "Heat Extractors": "Size", "Burners": "Width", "Oven": "Size",
+             "Kitchen Accessories": "Size", "Plate Racks": "Size", "Wine Racks": "Capacity", "Spoon Racks": "Size", "Pull-Out Hanger Profiles": "Size",
+             "Magic Corners": "Cabinet width", "Edges Tape": "Width", "Profiles": "Length", "Glass Profiles": "Length", "Other Products": "Size"}
+COLOUR_ATTR = {c: "Colour" for c in SIZE_ATTR} | {"Profiles": "Finish", "Glass Profiles": "Finish", "Other Products": "Finish"}
+
+
+def _option(attribute, label):
+    """The attribute's option with this name; demo data adds it when it does not exist yet."""
+    found = next((o for o in attribute.options if o.label.lower() == label.lower()), None)
+    if found is None:
+        found = AttributeOption(label=label, sort_order=len(attribute.options))
+        attribute.options.append(found)
+    return found
+
+
+def _options_for(db, category, sizes, colours, specs):
+    """Turn a demo product's sizes, colours and spec lines into attribute options; specs that are not attributes stay specs."""
+    attrs = {a.name: a for a in effective_attributes(db, category)}
+    chosen = [_option(attrs[SIZE_ATTR[category.name]], x) for x in sizes] + [_option(attrs[COLOUR_ATTR[category.name]], x) for x in colours]
+    plain = []
+    for name, value in specs:
+        match = next((o for o in attrs[name].options if o.label.lower() == value.lower()), None) if name in attrs else None
+        chosen.append(match) if match else plain.append((name, value))
+    return list(dict.fromkeys(chosen)), plain
+
+
 async def _opt(stem: str) -> bytes:
     class F:  # minimal UploadFile stand-in for read_and_optimise
         def __init__(self, data): self._d = io.BytesIO(data)
@@ -227,12 +255,13 @@ async def add() -> None:
             sku = f"DEMO-{sku}"
             if sku in have:
                 continue
+            options, plain_specs = _options_for(db, cats[cat], sizes, colours, specs)
             p = Product(
                 name=name, sku=sku, category_id=cats[cat].id, brand=brand, short_description=short, description=desc,
-                sizes=sizes, colours=colours, availability=avail,
+                options=options, availability=avail,
                 price_mode=PriceMode.public if price else PriceMode.request, public_price=Decimal(price) if price else None,
                 wholesale_note=wnote, stock_qty=stock, is_featured=feat, is_new=new,
-                specs=[ProductSpec(name=n, value=v, sort_order=i) for i, (n, v) in enumerate(specs)],
+                specs=[ProductSpec(name=n, value=v, sort_order=i) for i, (n, v) in enumerate(plain_specs)],
             )
             p.slug = unique_slug(db, Product, name)
             db.add(p)

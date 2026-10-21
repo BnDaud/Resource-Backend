@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.core.db import get_db
 from app.deps import get_current_staff
-from app.models import Availability, Category, Product, ProductImage, ProductSpec
+from app.models import AttributeOption, Availability, Category, Product, ProductImage, ProductSpec
 from app.routers.public import to_detail
 from app.schemas import ImageOut, Page, ProductAdmin, ProductIn
 from app.services import storage
+from app.services.attributes import check_product_options
 from app.services.common import escape_like, unique_slug
 
 router = APIRouter(prefix="/api/v1/admin", tags=["admin-catalog"], dependencies=[Depends(get_current_staff)])
@@ -25,14 +26,15 @@ def _nf(what: str):
 def _load(db: Session, pid: UUID) -> Product:
     p = db.scalar(
         select(Product).where(Product.uid == str(pid))
-        .options(selectinload(Product.images), selectinload(Product.specs), joinedload(Product.category))
+        .options(selectinload(Product.images), selectinload(Product.specs), joinedload(Product.category),
+                 selectinload(Product.options).joinedload(AttributeOption.attribute))
         .execution_options(populate_existing=True)
     )
     return p or _nf("Product")
 
 
 def _out(p: Product) -> dict:
-    return {**to_detail(p), "wholesale_note": p.wholesale_note, "stock_qty": p.stock_qty,
+    return {**to_detail(p), "option_ids": [o.id for o in p.options], "wholesale_note": p.wholesale_note, "stock_qty": p.stock_qty,
             "is_archived": p.is_archived, "updated_at": p.updated_at,
             "public_price": p.public_price if p.price_mode.value == "public" else None}
 
@@ -57,7 +59,8 @@ def list_products(
         stmt = stmt.where(or_(Product.name.ilike(like, escape="\\"), Product.sku.ilike(like, escape="\\")))
     total = db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
     rows = db.scalars(
-        stmt.options(selectinload(Product.images), selectinload(Product.specs), joinedload(Product.category))
+        stmt.options(selectinload(Product.images), selectinload(Product.specs), joinedload(Product.category),
+                     selectinload(Product.options).joinedload(AttributeOption.attribute))
         .order_by(Product.updated_at.desc()).offset((page - 1) * page_size).limit(page_size)
     ).all()
     return Page(items=[_out(p) for p in rows], total=total, page=page, page_size=page_size,
@@ -70,7 +73,7 @@ def get_product(pid: UUID, db: Session = Depends(get_db)):
 
 
 def _apply(p: Product, data: ProductIn):
-    for f in ("name", "sku", "category_id", "brand", "short_description", "description", "sizes", "colours",
+    for f in ("name", "sku", "category_id", "brand", "short_description", "description",
               "availability", "price_mode", "public_price", "wholesale_note", "stock_qty", "is_featured", "is_new"):
         setattr(p, f, getattr(data, f))
     p.specs = [ProductSpec(name=s.name, value=s.value, sort_order=i) for i, s in enumerate(data.specs)]
@@ -90,6 +93,7 @@ def create_product(data: ProductIn, db: Session = Depends(get_db)):
         raise HTTPException(422, "Choose a valid category")
     p = Product()
     _apply(p, data)
+    p.options = check_product_options(db, data.category_id, data.option_ids)
     p.slug = unique_slug(db, Product, data.name)
     db.add(p)
     _commit(db)
@@ -103,6 +107,7 @@ def update_product(pid: UUID, data: ProductIn, db: Session = Depends(get_db)):
         raise HTTPException(422, "Choose a valid category")
     renamed = data.name != p.name
     _apply(p, data)
+    p.options = check_product_options(db, data.category_id, data.option_ids)
     if renamed:
         p.slug = unique_slug(db, Product, data.name, exclude_id=p.id)
     _commit(db)
