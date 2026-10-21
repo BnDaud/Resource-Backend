@@ -157,7 +157,10 @@ class AttributeOption(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     attribute_id: Mapped[int] = mapped_column(ForeignKey("attributes.id", ondelete="CASCADE"), index=True)
     label: Mapped[str] = mapped_column(String(60))
+    code: Mapped[str | None] = mapped_column(String(40), nullable=True)  # catalogue code, like RAL 3020
     color: Mapped[str | None] = mapped_column(String(7), nullable=True)  # swatch, like #c0392b
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)  # optional photo of the colour or decor
+    image_path: Mapped[str | None] = mapped_column(String(500), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     attribute: Mapped[Attribute] = relationship(back_populates="options")
 

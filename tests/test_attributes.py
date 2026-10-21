@@ -90,3 +90,51 @@ def test_removing_options_and_attributes_takes_them_off_products(client, seed):
     assert client.get(f"/api/v1/admin/products/{seed['p1'].uid}").json()["option_ids"] == [size]
     save(client, f"category:{seed['cat'].id}", [])
     assert client.get(f"/api/v1/admin/products/{seed['p1'].uid}").json()["option_ids"] == []
+
+
+def test_options_carry_a_catalogue_code_and_a_long_colour_sheet_fits(client, seed):
+    login(client)
+    sheet = [{"name": "Special colour", "options": [{"label": f"Colour {i}", "code": f"RAL {1000 + i}", "color": "#c0392b"} for i in range(300)]}]
+    saved = save(client, "section:boards", sheet)
+    assert len(saved[0]["options"]) == 300 and saved[0]["options"][5]["code"] == "RAL 1005"
+    shown = client.get("/api/v1/attributes", params={"section": "boards"}).json()[0]["options"][5]
+    assert shown["code"] == "RAL 1005" and shown["image_url"] is None
+    twice = [{"name": "A", "options": [{"label": "Red", "code": "RAL 3020"}, {"label": "Traffic red", "code": "ral 3020"}]}]
+    assert client.put("/api/v1/admin/attributes?scope=section:boards", json=twice, headers=H).status_code == 422  # one code, one colour
+    same_name = [{"name": "A", "options": [{"label": "Grey", "code": "RAL 7000"}, {"label": "Grey", "code": "RAL 7001"}]}]
+    assert client.put("/api/v1/admin/attributes?scope=section:boards", json=same_name, headers=H).status_code == 200  # different codes may share a name
+
+
+def test_option_photos_are_uploaded_replaced_and_dropped_with_the_option(client, seed, monkeypatch):
+    import io
+    from PIL import Image
+    from app.services import storage
+    import itertools
+    deleted, names = [], itertools.count()
+
+    async def fake_upload(folder, data):
+        n = next(names)
+        return f"{folder}/{n}.webp", f"https://cdn/{folder}/{n}.webp"
+
+    async def fake_delete(path):
+        deleted.append(path)
+
+    monkeypatch.setattr(storage, "upload", fake_upload)
+    monkeypatch.setattr(storage, "delete", fake_delete)
+    login(client)
+    division = save(client, "section:boards", [{"name": "Colour", "options": [{"label": "Oak", "code": "D-101"}, {"label": "Walnut", "code": "D-102"}]}])
+    oak = division[0]["options"][0]["id"]
+    png = io.BytesIO(); Image.new("RGB", (900, 600), "brown").save(png, "PNG")
+    r = client.post(f"/api/v1/admin/attribute-options/{oak}/image", files={"file": ("oak.png", png.getvalue(), "image/png")}, headers=H)
+    assert r.status_code == 200 and r.json()["image_url"].startswith("https://cdn/options/")
+    first = r.json()["image_url"]
+    assert client.post(f"/api/v1/admin/attribute-options/{oak}/image", files={"file": ("x.png", b"nope", "image/png")}, headers=H).status_code == 415
+    again = client.post(f"/api/v1/admin/attribute-options/{oak}/image", files={"file": ("oak2.png", png.getvalue(), "image/png")}, headers=H)
+    assert again.json()["image_url"] != first and len(deleted) == 1  # the old photo is removed from storage
+    assert client.post("/api/v1/admin/attribute-options/9999/image", files={"file": ("a.png", png.getvalue(), "image/png")}, headers=H).status_code == 404
+    # saving the list again keeps the photo; removing the option deletes it
+    kept = [{"id": division[0]["id"], "name": "Colour", "options": [{"id": o["id"], "label": o["label"], "code": o["code"]} for o in client.get("/api/v1/admin/attributes?scope=section:boards").json()[0]["options"]]}]
+    assert save(client, "section:boards", kept)[0]["options"][0]["image_url"] == again.json()["image_url"]
+    save(client, "section:boards", [{"id": division[0]["id"], "name": "Colour", "options": [{"id": kept[0]["options"][1]["id"], "label": "Walnut", "code": "D-102"}]}])
+    assert len(deleted) == 2
+    assert client.delete(f"/api/v1/admin/attribute-options/{kept[0]['options'][1]['id']}/image", headers=H).status_code == 200

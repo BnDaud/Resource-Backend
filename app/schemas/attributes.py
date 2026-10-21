@@ -11,6 +11,7 @@ HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 class OptionIn(BaseModel):
     id: int | None = None
     label: str = Field(min_length=1, max_length=60)
+    code: str | None = Field(default=None, max_length=40)  # catalogue code, such as RAL 3020
     color: str | None = None  # swatch shown beside the label
 
     @field_validator("label")
@@ -20,6 +21,11 @@ class OptionIn(BaseModel):
         if not v:
             raise ValueError("Enter a name for the option")
         return v
+
+    @field_validator("code")
+    @classmethod
+    def _code(cls, v: str | None) -> str | None:
+        return clean(v) or None if v else None
 
     @field_validator("color")
     @classmethod
@@ -36,7 +42,7 @@ class AttributeIn(BaseModel):
     name: str = Field(min_length=1, max_length=60)
     filterable: bool = True
     customer_picks: bool = True
-    options: list[OptionIn] = Field(default_factory=list, max_length=60)
+    options: list[OptionIn] = Field(default_factory=list, max_length=600)
 
     @field_validator("name")
     @classmethod
@@ -51,16 +57,19 @@ class AttributeIn(BaseModel):
     def _unique_labels(cls, v: list[OptionIn]) -> list[OptionIn]:
         seen = set()
         for o in v:
-            if o.label.lower() in seen:
-                raise ValueError(f"'{o.label}' is listed twice")
-            seen.add(o.label.lower())
+            key = (o.code or o.label).lower()  # a catalogue code identifies a colour; without one, its name does
+            if key in seen:
+                raise ValueError(f"'{o.code or o.label}' is listed twice")
+            seen.add(key)
         return v
 
 
 class OptionOut(ORM):
     id: int
     label: str
+    code: str | None
     color: str | None
+    image_url: str | None
 
 
 class AttributeOut(ORM):

@@ -1,5 +1,8 @@
 """Seed the initial categories (two divisions), their filters and options, and the site-settings row. Safe to run repeatedly:
 it adds what is missing and never changes or removes what staff have edited."""
+import json
+from pathlib import Path
+
 from sqlalchemy import func, select
 
 from app.core.db import SessionLocal
@@ -19,6 +22,10 @@ DEVICE_COLOURS = [("Black", "#1c1c1c"), ("White", "#ffffff"), ("Silver", "#c0c3c
 PIECE_COLOURS = [("Black", "#1c1c1c"), ("White", "#ffffff"), ("Grey", "#8d9196"), ("Chrome", "#c0c3c7")]
 
 
+# The standard RAL Classic colour range (code, name, on-screen colour). The printed colour sheet is the reference.
+RAL = [(c["name"], c["hex"], c["code"]) for c in json.loads((Path(__file__).parent / "ral_classic.json").read_text(encoding="utf-8"))]
+
+
 def attr(name, options, *, filterable=True, picks=True):
     return (name, filterable, picks, options)
 
@@ -28,7 +35,8 @@ SCOPES = {
     ("section", "boards"): [
         attr("Finish", ["Matte", "Glossy"]),
         attr("Colour type", ["Simple colours", "Complex colours"], picks=False),
-        attr("Colour", COLOURS + ["From the colour sheet"]),
+        attr("Colour", COLOURS),
+        attr("Special colour", RAL),
         attr("Pattern", ["Synthetic", "Synchronized"]),
         attr("Size", ["8x4 ft", "7x3 ft"]),
         attr("Thickness", ["6 mm", "9 mm", "12 mm", "16 mm", "18 mm"]),
@@ -77,10 +85,10 @@ def seed_attributes(db, categories: dict[str, Category]) -> None:
                 a = Attribute(name=name, filterable=filterable, customer_picks=picks, sort_order=order, **values)
                 db.add(a)
                 db.flush()
-            labels = {o.label.lower() for o in a.options}
-            for label, color in ((o, None) if isinstance(o, str) else o for o in options):
-                if label.lower() not in labels:
-                    a.options.append(AttributeOption(label=label, color=color, sort_order=len(a.options)))
+            have_options = {(o.code or o.label).lower() for o in a.options}
+            for label, color, code in ((o, None, None) if isinstance(o, str) else (o + (None,))[:3] for o in options):
+                if (code or label).lower() not in have_options:
+                    a.options.append(AttributeOption(label=label, color=color, code=code, sort_order=len(a.options)))
     db.commit()
 
 

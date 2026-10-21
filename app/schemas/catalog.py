@@ -53,7 +53,7 @@ class ProductIn(BaseModel):
     brand: str = Field(default="", max_length=120)
     short_description: str = Field(default="", max_length=300)
     description: str = Field(default="", max_length=10000)
-    option_ids: list[int] = Field(default_factory=list, max_length=300)  # the finish, colour, size, ... options this product has
+    option_ids: list[int] = Field(default_factory=list, max_length=1000)  # the finish, colour, size, ... options this product has
     specs: list[SpecIO] = Field(default_factory=list, max_length=50)
     availability: Availability = Availability.on_request
     price_mode: PriceMode = PriceMode.request

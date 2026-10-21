@@ -43,14 +43,15 @@ def check_product_options(db: Session, category_id: int, option_ids: list[int]) 
     return [allowed[i] for i in option_ids]
 
 
-def replace_scope(db: Session, scope_filter, scope_values: dict, items: list[AttributeIn]) -> None:
+def replace_scope(db: Session, scope_filter, scope_values: dict, items: list[AttributeIn]) -> list[str]:
     """Make the attributes of one scope (a division or a category) equal to `items`; ids that are left out are deleted,
-    and deleting an option removes it from the products that had it."""
+    and deleting an option removes it from the products that had it. Returns the storage paths of photos that are no longer used."""
     existing = {a.id: a for a in db.scalars(select(Attribute).where(scope_filter).options(selectinload(Attribute.options)))}
     names = [i.name.lower() for i in items]
     if len(set(names)) != len(names):
         raise HTTPException(422, "Two attributes have the same name")
     keep: list[Attribute] = []
+    unused_photos: list[str] = []
     for order, item in enumerate(items):
         if item.id is not None:
             attr = existing.get(item.id) or _bad_id("attribute")
@@ -67,15 +68,19 @@ def replace_scope(db: Session, scope_filter, scope_values: dict, items: list[Att
             else:
                 opt = AttributeOption()
                 attr.options.append(opt)
-            opt.label, opt.color, opt.sort_order = o.label, o.color, pos
+            opt.label, opt.code, opt.color, opt.sort_order = o.label, o.code, o.color, pos
             kept_options.append(opt)
         for o in list(attr.options):
             if o not in kept_options:
                 attr.options.remove(o)
+                if o.image_path:
+                    unused_photos.append(o.image_path)
     for attr in existing.values():
         if attr not in keep:
+            unused_photos += [o.image_path for o in attr.options if o.image_path]
             db.delete(attr)
     db.commit()
+    return unused_photos
 
 
 def _bad_id(what: str):

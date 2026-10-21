@@ -16,7 +16,7 @@ def _headers() -> dict:
     return {"Authorization": f"Bearer {key}", "apikey": key}
 
 
-async def read_and_optimise(file: UploadFile) -> bytes:
+async def read_and_optimise(file: UploadFile, max_side: int = MAX_SIDE) -> bytes:
     """Validate the upload is a real image, strip metadata, cap size, re-encode as WebP."""
     s = get_settings()
     data = await file.read(s.max_upload_mb * 1024 * 1024 + 1)
@@ -30,7 +30,7 @@ async def read_and_optimise(file: UploadFile) -> bytes:
     except (UnidentifiedImageError, OSError):
         raise HTTPException(415, "File is not a valid image")
     img = img.convert("RGBA" if img.mode in ("RGBA", "LA", "P") else "RGB")
-    img.thumbnail((MAX_SIDE, MAX_SIDE))
+    img.thumbnail((max_side, max_side))
     out = io.BytesIO()
     img.save(out, "WEBP", quality=85, method=4)
     return out.getvalue()

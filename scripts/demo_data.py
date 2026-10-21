@@ -203,6 +203,13 @@ DEMO_SETTINGS = dict(
 )
 
 
+# boards offered in standard RAL colours (by code), to show the special-colour grid
+DEMO_SPECIAL = {
+    "DEMO-MDF-001": ["RAL 9010", "RAL 7016", "RAL 5015", "RAL 6005", "RAL 3020", "RAL 1015", "RAL 8017", "RAL 9005"],
+    "DEMO-MDF-002": ["RAL 3020", "RAL 3000", "RAL 9003", "RAL 9016"],
+    "DEMO-HDF-002": ["RAL 9010", "RAL 1013", "RAL 1015", "RAL 7035"],
+}
+
 # which attribute the old "sizes" and "colours" lists of a demo product belong to, per category
 SIZE_ATTR = {"HDF": "Size", "MDF": "Size", "Blockboard": "Size", "Microwave": "Capacity", "Heat Extractors": "Size", "Burners": "Width", "Oven": "Size",
              "Kitchen Accessories": "Size", "Plate Racks": "Size", "Wine Racks": "Capacity", "Spoon Racks": "Size", "Pull-Out Hanger Profiles": "Size",
@@ -256,6 +263,8 @@ async def add() -> None:
             if sku in have:
                 continue
             options, plain_specs = _options_for(db, cats[cat], sizes, colours, specs)
+            special = next((a for a in effective_attributes(db, cats[cat]) if a.name == "Special colour"), None)
+            options += [o for o in (special.options if special else []) if o.code in DEMO_SPECIAL.get(sku, [])]
             p = Product(
                 name=name, sku=sku, category_id=cats[cat].id, brand=brand, short_description=short, description=desc,
                 options=options, availability=avail,
