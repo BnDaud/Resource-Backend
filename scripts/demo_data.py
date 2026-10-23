@@ -36,7 +36,7 @@ AV, OOS, REQ, DISC = A.available, A.out_of_stock, A.on_request, A.discontinued
 P = [
     ("HDF", "Plain HDF Board, White Matte", "HDF-001", "", "Smooth, dense board for cabinets, wardrobes and wall panels.",
      "High-density fibreboard with a clean white matte face. Takes edge tape well and gives a flat, durable finish for furniture.",
-     ["8x4 ft", "7x3 ft"], ["White", "Cream", "Grey"], [("Finish", "Matte"), ("Colour type", "Simple colours"), ("Pattern", "Synthetic"), ("Thickness", "18 mm")], AV, 42500, "Bulk from 20 boards: ask for rate", 120, True, False,
+     ["8x4 ft"], ["White", "Cream", "Grey"], [("Finish", "Matte"), ("Colour type", "Simple colours"), ("Pattern", "Synthetic"), ("Thickness", "18 mm")], AV, 42500, "Bulk from 20 boards: ask for rate", 120, True, False,
      ["boards__F6cL5B7Gnz8"]),
     ("HDF", "Glossy HDF Board, Cream", "HDF-002", "", "High-gloss face for kitchen doors and shop fittings.",
      "High-density fibreboard with a shiny, reflective surface that wipes clean. Choose from simple colours or the colour sheet.",
@@ -52,7 +52,7 @@ P = [
      ["boards__NDQIHPA9Iv0"]),
     ("Blockboard", "Blockboard 18 mm, Plain", "BLK-001", "", "Strong timber-core board for shelves and doors.",
      "Blockboard with a solid timber-strip core and smooth faces. Light, stiff and well suited to long shelves, counters and doors.",
-     ["8x4 ft", "7x3 ft"], ["Natural"], [("Finish", "Matte"), ("Thickness", "18 mm"), ("Core", "Timber strips")], AV, 46000, "Bulk from 20 boards: ask for rate", 70, True, False,
+     ["8x4 ft"], ["Natural"], [("Finish", "Matte"), ("Thickness", "18 mm"), ("Core", "Timber strips")], AV, 46000, "Bulk from 20 boards: ask for rate", 70, True, False,
      ["boards__F6cL5B7Gnz8"]),
     ("Blockboard", "Veneered Blockboard, Walnut", "BLK-002", "", "Walnut-faced blockboard for finished furniture.",
      "Blockboard faced with a walnut-look veneer, ready to cut and edge for wardrobes and desks.",

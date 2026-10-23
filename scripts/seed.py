@@ -38,7 +38,7 @@ SCOPES = {
         attr("Colour", COLOURS),
         attr("Special colour", RAL),
         attr("Pattern", ["Synthetic", "Synchronized"]),
-        attr("Size", ["8x4 ft", "7x3 ft"]),
+        attr("Size", ["8x4 ft"]),
         attr("Thickness", ["6 mm", "9 mm", "12 mm", "16 mm", "18 mm"]),
     ],
     ("category", "Microwave"): [

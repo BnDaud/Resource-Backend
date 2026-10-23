@@ -1,7 +1,7 @@
 from tests.conftest import H, login
 
 FINISH = {"name": "Finish", "options": [{"label": "Matte"}, {"label": "Glossy", "color": "#FFFFFF"}]}
-SIZE = {"name": "Size", "customer_picks": True, "options": [{"label": "8x4 ft"}, {"label": "7x3 ft"}]}
+SIZE = {"name": "Size", "customer_picks": True, "options": [{"label": "8x4 ft"}, {"label": "6x3 ft"}]}
 PICKED = {"name": "Pattern", "filterable": False, "customer_picks": False, "options": [{"label": "Synthetic"}]}
 PROD = {"name": "Oak HDF Board", "sku": "FD-001", "availability": "available", "price_mode": "request"}
 
